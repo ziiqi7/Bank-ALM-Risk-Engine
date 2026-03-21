@@ -183,6 +183,8 @@ Run the example pipeline:
 python scripts/example_pipeline.py
 ```
 
+The script bootstraps the repository root onto `sys.path` automatically, so it can also be run from outside the project directory by pointing Python at the script path directly.
+
 Run the tests:
 
 ```bash

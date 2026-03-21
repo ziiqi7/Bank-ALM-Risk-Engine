@@ -7,10 +7,24 @@ from pathlib import Path
 import sys
 import pandas as pd
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-os.environ.setdefault("MPLCONFIGDIR", str(PROJECT_ROOT / ".mpl-cache"))
+
+def _bootstrap_project_root() -> Path:
+    """Add the repository root to ``sys.path`` based on this script's location.
+
+    This keeps the example runnable even when it is launched from a different
+    working directory, for example:
+    ``python /path/to/bank-alm-risk-engine/scripts/example_pipeline.py``.
+    """
+
+    project_root = Path(__file__).resolve().parents[1]
+    project_root_str = str(project_root)
+    if project_root_str not in sys.path:
+        sys.path.insert(0, project_root_str)
+    os.environ.setdefault("MPLCONFIGDIR", str(project_root / ".mpl-cache"))
+    return project_root
+
+
+PROJECT_ROOT = _bootstrap_project_root()
 
 from src.balance_sheet.portfolio import build_synthetic_portfolio
 from src.config import load_config
