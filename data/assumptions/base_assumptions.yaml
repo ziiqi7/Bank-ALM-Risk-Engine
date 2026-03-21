@@ -1,0 +1,100 @@
+as_of_date: "2025-01-01"
+repricing_buckets_months: [1, 3, 6, 12, 24, 60, 120]
+cash_gap_buckets_days: [7, 30, 90, 180, 365, 1825]
+base_discount_rate: 0.025
+
+standard_shocks:
+  parallel_up_bps: 200
+  parallel_down_bps: -200
+  short_up_bps: 250
+  short_down_bps: -250
+  steepener_short_bps: -65
+  steepener_long_bps: 65
+  flattener_short_bps: 80
+  flattener_long_bps: -80
+
+behavioral_assumptions:
+  retail_nmd_repricing_months: 60
+  retail_nmd_duration_years: 4.0
+  retail_nmd_beta: 0.35
+  non_maturity_deposit_stable_share: 0.85
+  term_deposit_early_withdrawal_pct: 0.1
+  fixed_mortgage_prepayment_pct: 0.03
+  cash_repricing_months: 1
+
+liquidity_assumptions:
+  hqla_haircuts:
+    level1: 0.0
+    level2a: 0.15
+    level2b: 0.5
+    none: 1.0
+  outflow_rates:
+    stable_retail_nmd: 0.05
+    less_stable_retail_nmd: 0.10
+    term_deposits: 0.10
+    interbank_borrowing: 1.00
+  inflow_rates:
+    floating_corporate_loans: 0.50
+    fixed_mortgages: 0.30
+    sovereign_bonds: 1.00
+    reserves/cash: 0.00
+  inflow_cap_pct: 0.75
+
+stress_scenarios:
+  idiosyncratic:
+    deposit_outflow_multiplier: 1.5
+    wholesale_outflow_multiplier: 1.25
+    inflow_multiplier: 0.9
+    hqla_haircut_addon: 0.05
+    parallel_rate_bps: 100
+    funding_spread_addons:
+      repo_funding: 0.004
+      interbank_borrowing: 0.011
+      term_funding: 0.003
+  market_wide:
+    deposit_outflow_multiplier: 1.2
+    wholesale_outflow_multiplier: 1.4
+    inflow_multiplier: 0.8
+    hqla_haircut_addon: 0.08
+    parallel_rate_bps: -50
+    funding_spread_addons:
+      repo_funding: 0.005
+      interbank_borrowing: 0.008
+      term_funding: 0.004
+  combined:
+    deposit_outflow_multiplier: 1.7
+    wholesale_outflow_multiplier: 1.6
+    inflow_multiplier: 0.75
+    hqla_haircut_addon: 0.10
+    parallel_rate_bps: 150
+    funding_spread_addons:
+      repo_funding: 0.006
+      interbank_borrowing: 0.015
+      term_funding: 0.005
+
+management_actions:
+  lcr_threshold: 1.00
+  survival_horizon_days_threshold: 90
+  nsfr_threshold: 1.00
+  eve_tolerance: 30.0
+  securities_liquidation_capacity: 40.0
+  repo_capacity: 60.0
+  repo_advance_rate: 0.98
+  repo_term_months: 3
+  repo_base_rate: 0.022
+  repo_spread: 0.004
+  repo_stress_spread_addon: 0.003
+  interbank_capacity: 100.0
+  interbank_term_months: 3
+  interbank_base_rate: 0.022
+  interbank_spread: 0.009
+  interbank_stress_spread_addon: 0.010
+  term_funding_capacity: 120.0
+  term_funding_term_months: 24
+  term_funding_base_rate: 0.022
+  term_funding_spread: 0.011
+  term_funding_stress_spread_addon: 0.002
+  loan_growth_reduction_capacity: 50.0
+  hedge_capacity: 60.0
+  hedge_term_months: 60
+  hedge_fixed_rate: 0.029

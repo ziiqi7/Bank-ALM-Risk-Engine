@@ -1,0 +1,214 @@
+# bank-alm-risk-engine
+
+`bank-alm-risk-engine` is a Python portfolio project for simplified banking-book ALM analysis. It is designed to be small enough to discuss in an interview, but structured enough to show how IRRBB, liquidity, stress testing, and treasury management actions can live in one coherent codebase.
+
+## Project Motivation
+
+Many ALM examples stop at passive measurement. This repository goes one step further:
+
+- build a synthetic balance sheet
+- calculate IRRBB and liquidity metrics
+- apply stress scenarios
+- simulate deterministic treasury and management actions
+- recompute the post-action risk profile
+
+The result is not a production bank platform. It is a transparent research and portfolio implementation intended to demonstrate architecture, methodology choices, and trade-offs.
+
+## What This Project Demonstrates
+
+- A unified balance-sheet position schema reused across IRRBB, liquidity, stress, and treasury overlays
+- Shared cashflow-based IRRBB design for both NII and EVE
+- Clear separation between metric calculation and management action overlays
+- Scenario-driven treasury funding cost feedback into stressed NII
+- A practical example of how liquidity support can improve survival and LCR while worsening NII
+- A codebase that stays readable without introducing unnecessary frameworks
+
+## Current Scope
+
+Included:
+
+- Synthetic balance-sheet generation
+- Repricing gap reporting
+- 12M NII sensitivity
+- EVE sensitivity
+- Standard rate shocks
+- Simplified LCR
+- Simplified NSFR
+- Contractual and behavioral cash-gap ladder
+- Idiosyncratic, market-wide, and combined stress scenarios
+- Rule-based management actions
+- Simplified treasury overlay and contingency funding actions
+- Post-action metric recomputation
+- YAML-based assumptions
+- Basic reporting tables and charts
+
+Explicitly out of scope:
+
+- Trading book functionality
+- Derivative pricing or hedge valuation
+- Full term-structure modeling
+- Stochastic simulation or Monte Carlo
+- Database integration
+- Web dashboards, APIs, or deployment tooling
+- Production-grade regulatory implementation
+
+## Repository Layout
+
+```text
+bank-alm-risk-engine/
+├── README.md
+├── requirements.txt
+├── .gitignore
+├── data/
+│   └── assumptions/
+│       └── base_assumptions.yaml
+├── docs/
+│   └── methodology.md
+├── scripts/
+│   └── example_pipeline.py
+├── src/
+│   ├── config.py
+│   ├── balance_sheet/
+│   ├── irrbb/
+│   ├── liquidity/
+│   ├── reporting/
+│   ├── stress/
+│   └── treasury/
+└── tests/
+    ├── test_eve.py
+    ├── test_lcr.py
+    ├── test_nii.py
+    └── test_treasury.py
+```
+
+## Data Model
+
+The core position schema lives in `src/balance_sheet/instruments.py`. Each position includes:
+
+- `position_id`
+- `product_type`
+- `balance_side`
+- `notional`
+- `currency`
+- `start_date`
+- `maturity_date`
+- `rate_type`
+- `coupon_rate`
+- `spread`
+- `repricing_freq_months`
+- `liquidity_category`
+- `behavioral_category`
+- `hqla_level`
+- `asf_factor`
+- `rsf_factor`
+- `encumbered`
+- `stress_spread_addon`
+
+`contractual_rate` and `base_rate` are exposed as derived properties on the position object and are used by the shared cashflow-based IRRBB logic.
+
+The synthetic portfolio includes:
+
+- Fixed mortgages
+- Floating corporate loans
+- Sovereign bonds
+- Reserves/cash
+- Retail NMDs
+- Term deposits
+- Interbank borrowing
+- Equity
+
+## Methodology Overview
+
+### IRRBB
+
+- Repricing gap buckets positions by next contractual or behavioral repricing horizon.
+- 12M NII uses shared future cashflows over the next 12 months and shocks row-level applied rates where repricing occurs.
+- Treasury funding costs can widen under stress through deterministic scenario-specific spread add-ons.
+- EVE uses the same cashflow schedules with two modes:
+  discount-only mode shocks discount rates only
+  projected-cashflow mode keeps the same schedule but can also reprice floating cashflows
+
+### Liquidity
+
+- LCR uses unencumbered HQLA only.
+- Repo cash proceeds are included in HQLA, but encumbered collateral is excluded from the numerator.
+- NSFR uses position-level ASF and RSF factors.
+- Cash-gap ladders support a simplified survival horizon view.
+
+### Stress And Actions
+
+- Stress scenarios apply runoff, haircut, inflow, and rate shocks.
+- Management actions run in sequence and recompute stressed metrics after each step.
+- Treasury overlays are modeled as balance-sheet transformations, not as abstract labels.
+
+## Design Boundaries
+
+- Repo is modeled as secured funding with simple encumbrance exclusion, not a full collateral engine.
+- Treasury funding cost feedback is deterministic and scenario-aware, not market-calibrated.
+- The hedge placeholder is a labeled synthetic balance-sheet overlay, not an IRS or derivative valuation.
+- EVE remains a simplified sensitivity view, even in projected-cashflow mode.
+
+## Example Outputs
+
+The example pipeline prints:
+
+- Portfolio summary
+- Repricing gap table
+- NII sensitivity grid
+- EVE sensitivity grid
+- EVE mode comparison
+- EVE attribution by product type
+- LCR and NSFR summaries
+- Cash-gap ladder
+- Stress summary
+- Combined-stress pre-action vs post-action comparison
+- Management action summary
+
+It also writes:
+
+- `docs/repricing_gap.png`
+- `docs/cash_gap.png`
+
+## Quick Start
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the example pipeline:
+
+```bash
+python scripts/example_pipeline.py
+```
+
+Run the tests:
+
+```bash
+pytest
+```
+
+## Interview-Ready Talking Points
+
+- Why a shared cashflow engine matters for keeping NII and EVE structurally consistent
+- Why LCR should exclude encumbered HQLA after repo
+- How treasury actions improve liquidity metrics while often worsening stressed NII
+- Why EVE is presented as a sensitivity view rather than a full valuation engine
+- How scenario-dependent funding spreads add realism without introducing heavy market infrastructure
+
+## Known Limitations
+
+- No amortization engine
+- No stochastic rates or spreads
+- No production Basel treatment or legal-entity granularity
+- No derivative pricing or full hedge effectiveness modeling
+- No optimization layer for action selection
+
+## Potential Future Extensions
+
+- Multi-currency aggregation
+- Richer behavioral deposit segmentation
+- Planned asset-growth pipeline positions for action simulation
+- More granular EVE decomposition and reporting exports
+- Optional optimization of management action sequence under user-defined constraints
