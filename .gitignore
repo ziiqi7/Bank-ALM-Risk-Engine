@@ -16,3 +16,4 @@ docs/*.png
 data/portfolios/generated_portfolio.csv
 outputs/distributions/*.csv
 outputs/distributions/*.png
+outputs/reports/*.pdf

@@ -206,7 +206,7 @@ It also writes:
 
 - `docs/repricing_gap.png`
 - `docs/cash_gap.png`
-- `outputs/reports/alm_demo_case_analysis.pdf`
+- a generated PDF report under `outputs/reports/`
 
 ## Quick Start
 
