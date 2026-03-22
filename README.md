@@ -206,7 +206,7 @@ It also writes:
 
 - `docs/repricing_gap.png`
 - `docs/cash_gap.png`
-- a generated PDF report under `outputs/reports/`
+- generated report files under `outputs/reports/` when report generation is run locally
 
 ## Quick Start
 
@@ -250,12 +250,6 @@ Run all three fixed demo cases in sequence:
 python scripts/run_demo_cases.py
 ```
 
-Generate PDF report:
-
-```bash
-python scripts/generate_report.py
-```
-
 Generate a constrained random portfolio and run the engine:
 
 ```bash
@@ -273,6 +267,23 @@ Run the tests:
 ```bash
 pytest
 ```
+
+## Report Generation
+
+You can generate a PDF report using:
+
+```bash
+python scripts/generate_report.py
+```
+
+The report will be saved to:
+
+```text
+outputs/reports/
+```
+
+Note:
+Generated reports are not tracked in the repository.
 
 ## Interview-Ready Talking Points
 
