@@ -33,8 +33,6 @@ def comparison_table(pre_metrics: pd.DataFrame, post_metrics: pd.DataFrame) -> p
 def action_log_table(action_log: pd.DataFrame) -> pd.DataFrame:
     """Return a lightly formatted action log table."""
 
-    if action_log.empty:
-        return pd.DataFrame(columns=["step", "action_name", "amount", "trigger", "comment"])
     preferred_order = [
         "step",
         "action_name",
@@ -54,6 +52,8 @@ def action_log_table(action_log: pd.DataFrame) -> pd.DataFrame:
         "survival_after_days",
         "comment",
     ]
+    if action_log.empty:
+        return pd.DataFrame(columns=preferred_order)
     existing_columns = [column for column in preferred_order if column in action_log.columns]
     remaining_columns = [column for column in action_log.columns if column not in existing_columns]
     return action_log[[*existing_columns, *remaining_columns]].copy()

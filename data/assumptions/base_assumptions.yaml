@@ -42,31 +42,31 @@ liquidity_assumptions:
 
 stress_scenarios:
   idiosyncratic:
-    deposit_outflow_multiplier: 1.5
-    wholesale_outflow_multiplier: 1.25
-    inflow_multiplier: 0.9
-    hqla_haircut_addon: 0.05
-    parallel_rate_bps: 100
+    deposit_outflow_multiplier: 1.32
+    wholesale_outflow_multiplier: 1.14
+    inflow_multiplier: 0.93
+    hqla_haircut_addon: 0.04
+    parallel_rate_bps: 85
     funding_spread_addons:
       repo_funding: 0.004
       interbank_borrowing: 0.011
       term_funding: 0.003
   market_wide:
-    deposit_outflow_multiplier: 1.2
-    wholesale_outflow_multiplier: 1.4
-    inflow_multiplier: 0.8
-    hqla_haircut_addon: 0.08
+    deposit_outflow_multiplier: 1.12
+    wholesale_outflow_multiplier: 1.20
+    inflow_multiplier: 0.87
+    hqla_haircut_addon: 0.055
     parallel_rate_bps: -50
     funding_spread_addons:
       repo_funding: 0.005
       interbank_borrowing: 0.008
       term_funding: 0.004
   combined:
-    deposit_outflow_multiplier: 1.7
-    wholesale_outflow_multiplier: 1.6
-    inflow_multiplier: 0.75
-    hqla_haircut_addon: 0.10
-    parallel_rate_bps: 150
+    deposit_outflow_multiplier: 1.36
+    wholesale_outflow_multiplier: 1.24
+    inflow_multiplier: 0.86
+    hqla_haircut_addon: 0.055
+    parallel_rate_bps: 110
     funding_spread_addons:
       repo_funding: 0.006
       interbank_borrowing: 0.015
@@ -74,9 +74,9 @@ stress_scenarios:
 
 management_actions:
   lcr_threshold: 1.00
-  survival_horizon_days_threshold: 90
+  survival_horizon_days_threshold: 14
   nsfr_threshold: 1.00
-  eve_tolerance: 30.0
+  eve_tolerance: 360.0
   securities_liquidation_capacity: 40.0
   repo_capacity: 60.0
   repo_advance_rate: 0.98

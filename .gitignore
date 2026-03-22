@@ -13,3 +13,6 @@ dist/
 .ipynb_checkpoints/
 .mpl-cache/
 docs/*.png
+data/portfolios/generated_portfolio.csv
+outputs/distributions/*.csv
+outputs/distributions/*.png

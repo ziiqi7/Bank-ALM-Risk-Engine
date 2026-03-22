@@ -1,14 +1,111 @@
-"""Portfolio container and synthetic balance-sheet generation."""
+"""Portfolio container, CSV loading, and synthetic balance-sheet generation."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
 from src.balance_sheet.instruments import Position
-from src.config import add_months
+from src.config import add_months, parse_date
+
+PORTFOLIO_COLUMNS = [
+    "position_id",
+    "product_type",
+    "balance_side",
+    "notional",
+    "currency",
+    "start_date",
+    "maturity_date",
+    "rate_type",
+    "coupon_rate",
+    "spread",
+    "repricing_freq_months",
+    "liquidity_category",
+    "behavioral_category",
+    "hqla_level",
+    "asf_factor",
+    "rsf_factor",
+    "encumbered",
+    "stress_spread_addon",
+]
+
+
+def _parse_optional_int(value: Any) -> int | None:
+    """Convert optional CSV integer values into Python integers."""
+
+    if value is None or pd.isna(value) or value == "":
+        return None
+    return int(float(value))
+
+
+def _parse_bool(value: Any) -> bool:
+    """Convert CSV booleans into Python ``bool`` values."""
+
+    if isinstance(value, bool):
+        return value
+    if value is None or pd.isna(value) or value == "":
+        return False
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return str(value).strip().lower() in {"1", "true", "yes", "y"}
+
+
+def position_to_record(position: Position) -> dict[str, Any]:
+    """Serialize a ``Position`` into a CSV-friendly record."""
+
+    return {
+        "position_id": position.position_id,
+        "product_type": position.product_type,
+        "balance_side": position.balance_side,
+        "notional": position.notional,
+        "currency": position.currency,
+        "start_date": position.start_date.isoformat(),
+        "maturity_date": position.maturity_date.isoformat(),
+        "rate_type": position.rate_type,
+        "coupon_rate": position.coupon_rate,
+        "spread": position.spread,
+        "repricing_freq_months": position.repricing_freq_months,
+        "liquidity_category": position.liquidity_category,
+        "behavioral_category": position.behavioral_category,
+        "hqla_level": position.hqla_level,
+        "asf_factor": position.asf_factor,
+        "rsf_factor": position.rsf_factor,
+        "encumbered": position.encumbered,
+        "stress_spread_addon": position.stress_spread_addon,
+    }
+
+
+def position_from_record(record: dict[str, Any]) -> Position:
+    """Build a ``Position`` from a CSV or DataFrame record."""
+
+    missing_columns = [column for column in PORTFOLIO_COLUMNS if column not in record]
+    if missing_columns:
+        raise ValueError(f"Portfolio row is missing required columns: {missing_columns}")
+
+    return Position(
+        position_id=str(record["position_id"]),
+        product_type=str(record["product_type"]),
+        balance_side=str(record["balance_side"]),
+        notional=float(record["notional"]),
+        currency=str(record["currency"]),
+        start_date=parse_date(record["start_date"]),
+        maturity_date=parse_date(record["maturity_date"]),
+        rate_type=str(record["rate_type"]),
+        coupon_rate=float(record["coupon_rate"]),
+        spread=float(record["spread"]),
+        repricing_freq_months=_parse_optional_int(record["repricing_freq_months"]),
+        liquidity_category=str(record["liquidity_category"]),
+        behavioral_category=str(record["behavioral_category"]),
+        hqla_level=str(record["hqla_level"]),
+        asf_factor=float(record["asf_factor"]),
+        rsf_factor=float(record["rsf_factor"]),
+        encumbered=_parse_bool(record["encumbered"]),
+        stress_spread_addon=float(record["stress_spread_addon"]),
+    )
 
 
 @dataclass
@@ -17,32 +114,31 @@ class Portfolio:
 
     positions: list[Position]
 
+    @classmethod
+    def from_frame(cls, frame: pd.DataFrame) -> Portfolio:
+        """Create a ``Portfolio`` from a tabular position dataset."""
+
+        records = frame.to_dict(orient="records")
+        return cls(positions=[position_from_record(record) for record in records])
+
+    @classmethod
+    def from_csv(cls, path: str | Path) -> Portfolio:
+        """Load a portfolio from a CSV file using the unified position schema."""
+
+        return load_portfolio_from_csv(path)
+
     def to_frame(self) -> pd.DataFrame:
-        return pd.DataFrame(
-            [
-                {
-                    "position_id": position.position_id,
-                    "product_type": position.product_type,
-                    "balance_side": position.balance_side,
-                    "notional": position.notional,
-                    "currency": position.currency,
-                    "start_date": position.start_date,
-                    "maturity_date": position.maturity_date,
-                    "rate_type": position.rate_type,
-                    "coupon_rate": position.coupon_rate,
-                    "spread": position.spread,
-                    "repricing_freq_months": position.repricing_freq_months,
-                    "liquidity_category": position.liquidity_category,
-                    "behavioral_category": position.behavioral_category,
-                    "hqla_level": position.hqla_level,
-                    "asf_factor": position.asf_factor,
-                    "rsf_factor": position.rsf_factor,
-                    "encumbered": position.encumbered,
-                    "stress_spread_addon": position.stress_spread_addon,
-                }
-                for position in self.positions
-            ]
-        )
+        """Return the portfolio as a tidy DataFrame."""
+
+        return pd.DataFrame([position_to_record(position) for position in self.positions], columns=PORTFOLIO_COLUMNS)
+
+    def to_csv(self, path: str | Path) -> Path:
+        """Write the portfolio to CSV in the project schema."""
+
+        output_path = Path(path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        self.to_frame().to_csv(output_path, index=False)
+        return output_path
 
     def total_assets(self) -> float:
         return sum(position.notional for position in self.positions if position.is_asset)
@@ -54,10 +150,27 @@ class Portfolio:
         return sum(position.notional for position in self.positions if position.is_equity)
 
 
-def build_synthetic_portfolio(as_of_date: date) -> Portfolio:
-    """Create a synthetic banking-book balance sheet for v1 analytics."""
+def load_portfolio_from_csv(path: str | Path) -> Portfolio:
+    """Load a portfolio CSV into ``Position`` objects."""
 
-    positions = [
+    portfolio_path = Path(path)
+    frame = pd.read_csv(portfolio_path)
+    missing_columns = [column for column in PORTFOLIO_COLUMNS if column not in frame.columns]
+    if missing_columns:
+        raise ValueError(f"Portfolio CSV is missing required columns: {missing_columns}")
+    return Portfolio.from_frame(frame[PORTFOLIO_COLUMNS])
+
+
+def save_portfolio_to_csv(portfolio: Portfolio, path: str | Path) -> Path:
+    """Persist a portfolio to CSV."""
+
+    return portfolio.to_csv(path)
+
+
+def _build_base_synthetic_positions(as_of_date: date) -> list[Position]:
+    """Create the legacy hard-coded synthetic banking-book portfolio."""
+
+    return [
         Position(
             position_id="A1",
             product_type="fixed_mortgages",
@@ -239,4 +352,9 @@ def build_synthetic_portfolio(as_of_date: date) -> Portfolio:
             rsf_factor=0.0,
         ),
     ]
-    return Portfolio(positions=positions)
+
+
+def build_synthetic_portfolio(as_of_date: date) -> Portfolio:
+    """Create the legacy hard-coded synthetic banking-book balance sheet."""
+
+    return Portfolio(positions=_build_base_synthetic_positions(as_of_date))

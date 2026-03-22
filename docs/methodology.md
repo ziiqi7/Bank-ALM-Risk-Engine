@@ -2,6 +2,25 @@
 
 This repository implements a simplified banking-book ALM risk engine for portfolio and research use. The calculations are intentionally compact and transparent rather than regulatory-production complete.
 
+## Portfolio Inputs
+
+- The preferred workflow is CSV-driven: portfolio rows map directly into the shared `Position` schema.
+- `data/portfolios/base_portfolio.csv` is the stable reference dataset for repeatable examples.
+- `data/portfolios/demo_balanced.csv` is the fixed balanced showcase case selected from the `balanced` generator profile.
+- `data/portfolios/demo_liquidity_tight.csv` is the fixed liquidity-stress showcase case selected from the `liquidity_tight` profile.
+- `data/portfolios/demo_irrbb_heavy.csv` is the fixed IRRBB-sensitive showcase case selected from the `irrbb_heavy` profile.
+- A constrained random generator can produce seeded portfolios for `balanced`, `irrbb_heavy`, and `liquidity_tight` profiles.
+- `scripts/generate_demo_cases.py` regenerates those three demo-case CSVs from deterministic seeds so walkthroughs stay stable over time.
+- The current fixed demo seeds are `balanced=41`, `liquidity_tight=36`, and `irrbb_heavy=55`, chosen from a small deterministic search to match the intended narratives.
+- The legacy hard-coded synthetic builder remains in the codebase for backward compatibility, but it is no longer the primary runnable workflow.
+
+## Batch Distribution Analysis
+
+- The analysis layer can run many generated portfolios and collect run-level outcomes into a tidy results table.
+- Aggregation is profile-based and reports summary statistics such as mean, median, min, max, p10, and p90.
+- Action usage rates are summarized separately so the user can see how often repo, unsecured funding, term funding, or the hedge placeholder are triggered.
+- This is not Monte Carlo market simulation. The randomness is in constrained balance-sheet composition, while rate shocks and stress scenarios remain deterministic.
+
 ## IRRBB
 
 - Repricing gap assigns each rate-sensitive position to a next-repricing bucket.
@@ -42,6 +61,7 @@ This repository implements a simplified banking-book ALM risk engine for portfol
 
 ## Deliberate Simplifications
 
+- Portfolio generation is constrained and profile-based rather than market-calibrated or institution-specific.
 - No derivative valuation, hedge pricing, or optimization solver.
 - No term structure model, no stochastic spread process, and no full valuation engine for EVE.
 - No production Basel calibration or full regulatory cap logic.

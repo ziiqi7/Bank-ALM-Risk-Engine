@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 from pathlib import Path
 import sys
+
 import pandas as pd
 
 
@@ -26,8 +28,9 @@ def _bootstrap_project_root() -> Path:
 
 PROJECT_ROOT = _bootstrap_project_root()
 
-from src.balance_sheet.portfolio import build_synthetic_portfolio
-from src.config import load_config
+from src.balance_sheet.portfolio import Portfolio, load_portfolio_from_csv
+from src.config import EngineConfig, load_config
+from src.data.generator import GENERATION_PROFILES, generate_random_portfolio_csv
 from src.irrbb.eve import calculate_eve_sensitivity, run_eve_sensitivity_grid
 from src.irrbb.nii import calculate_12m_nii_sensitivity, run_nii_sensitivity_grid
 from src.irrbb.repricing import compute_repricing_gap
@@ -49,10 +52,60 @@ def _print_table(table: pd.DataFrame) -> None:
     print(table.to_string(index=False, float_format=lambda value: f"{value:,.3f}"))
 
 
-def main() -> None:
-    project_root = PROJECT_ROOT
-    config = load_config(project_root / "data" / "assumptions" / "base_assumptions.yaml")
-    portfolio = build_synthetic_portfolio(config.as_of_date)
+def _build_action_views(action_summary: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
+    """Build a compact action view that stays safe when no actions were triggered."""
+
+    compact_columns = [
+        "step",
+        "action_name",
+        "amount",
+        "funding_stress_spread_used",
+        "delta_nii_change",
+        "lcr_after",
+        "survival_after_days",
+    ]
+    return action_summary.reindex(columns=compact_columns), action_summary.empty
+
+
+def _resolve_path(path_value: str | Path, project_root: Path) -> Path:
+    """Resolve a user-supplied path relative to the project root when needed."""
+
+    path = Path(path_value)
+    return path if path.is_absolute() else project_root / path
+
+
+def load_or_generate_portfolio(
+    config: EngineConfig,
+    project_root: Path,
+    portfolio_path: str | Path,
+    generate: bool = False,
+    profile: str = "balanced",
+    seed: int | None = None,
+    generated_output: str | Path = "data/portfolios/generated_portfolio.csv",
+) -> tuple[Portfolio, Path]:
+    """Load a CSV portfolio or generate a constrained random CSV first."""
+
+    if generate:
+        output_path = _resolve_path(generated_output, project_root)
+        portfolio = generate_random_portfolio_csv(
+            as_of_date=config.as_of_date,
+            output_path=output_path,
+            profile=profile,
+            seed=seed,
+        )
+        return portfolio, output_path
+
+    resolved_path = _resolve_path(portfolio_path, project_root)
+    return load_portfolio_from_csv(resolved_path), resolved_path
+
+
+def run_pipeline(
+    portfolio: Portfolio,
+    config: EngineConfig,
+    project_root: Path,
+    portfolio_source: str | Path,
+) -> None:
+    """Run the full reporting pipeline for a loaded portfolio."""
 
     shocks = build_standard_rate_shocks(config)
     scenarios = build_stress_scenarios(config)
@@ -102,17 +155,10 @@ def main() -> None:
     save_bar_chart(cash_gap.ladder, "bucket", "net_gap", "Cash Gap Ladder", charts_dir / "cash_gap.png")
 
     action_summary = action_log_table(combined_action_result.action_log)
-    compact_action_view = action_summary[
-        [
-            "step",
-            "action_name",
-            "amount",
-            "funding_stress_spread_used",
-            "delta_nii_change",
-            "lcr_after",
-            "survival_after_days",
-        ]
-    ].copy()
+    compact_action_view, no_actions_triggered = _build_action_views(action_summary)
+
+    _print_title("Portfolio Source")
+    print(portfolio_source)
 
     _print_title("Portfolio Summary")
     _print_table(headline)
@@ -145,11 +191,64 @@ def main() -> None:
     _print_title("Management Actions - Pre vs Post")
     _print_table(action_comparison)
 
-    _print_title("Management Actions - Cost View")
-    _print_table(compact_action_view)
+    if no_actions_triggered:
+        _print_title("Management Actions")
+        print("No management actions were triggered under this scenario.")
+    else:
+        _print_title("Management Actions - Cost View")
+        _print_table(compact_action_view)
 
-    _print_title("Management Actions - Full Log")
-    _print_table(action_summary)
+        _print_title("Management Actions - Full Log")
+        _print_table(action_summary)
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse example pipeline command-line arguments."""
+
+    parser = argparse.ArgumentParser(description="Run the ALM risk engine on a CSV or generated portfolio.")
+    parser.add_argument(
+        "--portfolio",
+        default="data/portfolios/base_portfolio.csv",
+        help="Path to the input portfolio CSV.",
+    )
+    parser.add_argument(
+        "--generate",
+        action="store_true",
+        help="Generate a new constrained random portfolio CSV before running the engine.",
+    )
+    parser.add_argument(
+        "--profile",
+        default="balanced",
+        choices=GENERATION_PROFILES,
+        help="Generation profile to use when --generate is supplied.",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed for deterministic portfolio generation.",
+    )
+    parser.add_argument(
+        "--generated-output",
+        default="data/portfolios/generated_portfolio.csv",
+        help="Output CSV path used when --generate is supplied.",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    config = load_config(PROJECT_ROOT / "data" / "assumptions" / "base_assumptions.yaml")
+    portfolio, portfolio_path = load_or_generate_portfolio(
+        config=config,
+        project_root=PROJECT_ROOT,
+        portfolio_path=args.portfolio,
+        generate=args.generate,
+        profile=args.profile,
+        seed=args.seed,
+        generated_output=args.generated_output,
+    )
+    run_pipeline(portfolio=portfolio, config=config, project_root=PROJECT_ROOT, portfolio_source=portfolio_path)
 
 
 if __name__ == "__main__":

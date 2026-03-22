@@ -1,0 +1,11 @@
+position_id,product_type,balance_side,notional,currency,start_date,maturity_date,rate_type,coupon_rate,spread,repricing_freq_months,liquidity_category,behavioral_category,hqla_level,asf_factor,rsf_factor,encumbered,stress_spread_addon
+A1,fixed_mortgages,asset,1875.0,EUR,2023-07-01,2031-01-01,fixed,0.032,0.0,,loan_book,amortizing,none,0.0,0.85,False,0.0
+A2,fixed_mortgages,asset,1350.0,EUR,2022-07-01,2035-01-01,fixed,0.036,0.0,,loan_book,amortizing,none,0.0,0.85,False,0.0
+A3,floating_corporate_loans,asset,1650.0,EUR,2024-01-01,2029-01-01,floating,0.022,0.015,3,loan_book,contractual,none,0.0,0.5,False,0.0
+A4,sovereign_bonds,asset,1050.0,EUR,2024-07-01,2028-01-01,fixed,0.024,0.0,,securities,contractual,level1,0.0,0.05,False,0.0
+A5,reserves/cash,asset,675.0,EUR,2024-12-01,2025-02-01,nonrate,0.0,0.0,1,cash,overnight,level1,0.0,0.0,False,0.0
+L1,retail_nmd,liability,3150.0,EUR,2022-01-01,2045-01-01,nonrate,0.002,0.0,,deposit,retail_nmd,none,0.9,0.0,False,0.0
+L2,retail_nmd,liability,825.0,EUR,2024-01-01,2040-01-01,nonrate,0.004,0.0,,deposit,retail_nmd_less_stable,none,0.8,0.0,False,0.0
+L3,term_deposits,liability,1425.0,EUR,2024-07-01,2026-01-01,fixed,0.028,0.0,,deposit,contractual,none,0.95,0.0,False,0.0
+L4,interbank_borrowing,liability,637.5,EUR,2024-10-01,2025-07-01,floating,0.027,0.004,1,wholesale,contractual,none,0.5,0.0,False,0.0
+E1,equity,equity,562.5,EUR,2025-01-01,2055-01-01,nonrate,0.0,0.0,,capital,permanent,none,1.0,0.0,False,0.0
