@@ -1,8 +1,10 @@
 # bank-alm-risk-engine
 
-`bank-alm-risk-engine` is a Python portfolio project for simplified banking-book ALM analysis. It is designed to be small enough to discuss in an interview, but structured enough to show how IRRBB, liquidity, stress testing, and treasury management actions can live in one coherent codebase.
+A simplified ALM engine for analyzing banking-book balance sheet behaviour under stress, integrating IRRBB, liquidity risk, and management actions.
 
-## Project Motivation
+`bank-alm-risk-engine` is a Python repository for simplified banking-book ALM analysis. It combines balance-sheet representation, cashflow-based IRRBB, liquidity metrics, stress testing, treasury actions, and reporting in one modular codebase.
+
+## Project Overview
 
 Many ALM examples stop at passive measurement. This repository goes one step further:
 
@@ -13,9 +15,9 @@ Many ALM examples stop at passive measurement. This repository goes one step fur
 - simulate deterministic treasury and management actions
 - recompute the post-action risk profile
 
-The result is not a production bank platform. It is a transparent research and portfolio implementation intended to demonstrate architecture, methodology choices, and trade-offs.
+The result is not a production bank platform. It is a compact ALM codebase for exploring architecture, methodology choices, and balance-sheet trade-offs.
 
-## What This Project Demonstrates
+## Architecture
 
 - A unified balance-sheet position schema reused across IRRBB, liquidity, stress, and treasury overlays
 - Shared cashflow-based IRRBB design for both NII and EVE
@@ -186,6 +188,13 @@ The supported banking-book product set includes:
 - The hedge placeholder is a labeled synthetic balance-sheet overlay, not an IRS or derivative valuation.
 - EVE remains a simplified sensitivity view, even in projected-cashflow mode.
 
+## Demo Cases
+
+- `demo_balanced` is the stable reference case with stronger starting liquidity and low or no management-action usage.
+- `demo_liquidity_tight` is the liquidity-pressure case with thinner HQLA buffers and a higher likelihood of repo or interbank funding actions.
+- `demo_irrbb_heavy` is the duration-sensitive case with higher fixed-rate mortgage concentration and stronger EVE sensitivity.
+- `scripts/run_demo_cases.py` runs all three fixed cases sequentially for side-by-side review.
+
 ## Example Outputs
 
 The example pipeline prints:
@@ -208,7 +217,7 @@ It also writes:
 - `docs/cash_gap.png`
 - generated report files under `outputs/reports/` when report generation is run locally
 
-## Quick Start
+## Usage
 
 Install dependencies:
 
@@ -285,7 +294,7 @@ outputs/reports/
 Note:
 Generated reports are not tracked in the repository.
 
-## Interview-Ready Talking Points
+## Key Design Notes
 
 - Why a shared cashflow engine matters for keeping NII and EVE structurally consistent
 - Why fixed demo-case CSVs make walkthroughs repeatable without depending on ad hoc random draws
